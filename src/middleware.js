@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 
-// Middleware de autenticación
 const authMiddleware = (req, res, next) => {
     const token = req.header("Authorization");
 
@@ -9,7 +8,10 @@ const authMiddleware = (req, res, next) => {
     }
 
     try {
-        const verified = jwt.verify(token, process.env.JWT_SECRET);
+        // Si el token viene con "Bearer ", eliminarlo antes de verificarlo
+        const cleanToken = token.startsWith("Bearer ") ? token.slice(7).trim() : token;
+
+        const verified = jwt.verify(cleanToken, process.env.JWT_SECRET);
         req.userId = verified.userId;
         next();  // Continuar con la siguiente función en la ruta
     } catch (error) {
@@ -18,3 +20,4 @@ const authMiddleware = (req, res, next) => {
 };
 
 module.exports = authMiddleware;
+

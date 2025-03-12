@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const registerUser = async (req, res) => {
     try {
         const { name, email, password } = req.body;
-        
+
         // Verificar si el usuario ya existe
         const userExists = await User.findOne({ email });
         if (userExists) return res.status(400).json({ message: "El usuario ya existe" });
@@ -21,7 +21,7 @@ const registerUser = async (req, res) => {
 
         res.status(201).json({ message: "Usuario registrado correctamente" });
     } catch (error) {
-        res.status(500).json({ message: "Error en el servidor", error });
+        res.status(500).json({ message: "Error en el servidor", error: error.message });
     }
 };
 
@@ -43,7 +43,7 @@ const loginUser = async (req, res) => {
 
         res.json({ token, userId: user._id, name: user.name });
     } catch (error) {
-        res.status(500).json({ message: "Error en el servidor", error });
+        res.status(500).json({ message: "Error en el servidor", error: error.message });
     }
 };
 
@@ -53,7 +53,7 @@ const getUsers = async (req, res) => {
         const users = await User.find().select("-password"); // Excluir contraseñas
         res.json(users);
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener usuarios", error });
+        res.status(500).json({ message: "Error al obtener usuarios", error: error.message });
     }
 };
 
@@ -61,19 +61,23 @@ const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
         const updatedUser = await User.findByIdAndUpdate(id, req.body, { new: true });
+        if (!updatedUser) return res.status(404).json({ message: "Usuario no encontrado" });
+
         res.json(updatedUser);
     } catch (error) {
-        res.status(500).json({ message: "Error al actualizar usuario", error });
+        res.status(500).json({ message: "Error al actualizar usuario", error: error.message });
     }
 };
 
 const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
-        await User.findByIdAndDelete(id);
+        const deletedUser = await User.findByIdAndDelete(id);
+        if (!deletedUser) return res.status(404).json({ message: "Usuario no encontrado" });
+
         res.json({ message: "Usuario eliminado correctamente" });
     } catch (error) {
-        res.status(500).json({ message: "Error al eliminar usuario", error });
+        res.status(500).json({ message: "Error al eliminar usuario", error: error.message });
     }
 };
 
@@ -83,7 +87,20 @@ const getItems = async (req, res) => {
         const items = await Item.find();
         res.json(items);
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener items", error });
+        res.status(500).json({ message: "Error al obtener items", error: error.message });
+    }
+};
+
+// ✅ **Obtener un item por ID**
+const getItemById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const item = await Item.findById(id);
+        if (!item) return res.status(404).json({ message: "Item no encontrado" });
+
+        res.json(item);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener el item", error: error.message });
     }
 };
 
@@ -94,7 +111,7 @@ const createItem = async (req, res) => {
         await newItem.save();
         res.status(201).json(newItem);
     } catch (error) {
-        res.status(500).json({ message: "Error al crear el item", error });
+        res.status(500).json({ message: "Error al crear el item", error: error.message });
     }
 };
 
@@ -102,22 +119,36 @@ const updateItem = async (req, res) => {
     try {
         const { id } = req.params;
         const updatedItem = await Item.findByIdAndUpdate(id, req.body, { new: true });
+        if (!updatedItem) return res.status(404).json({ message: "Item no encontrado" });
+
         res.json(updatedItem);
     } catch (error) {
-        res.status(500).json({ message: "Error al actualizar el item", error });
+        res.status(500).json({ message: "Error al actualizar el item", error: error.message });
     }
 };
 
 const deleteItem = async (req, res) => {
     try {
         const { id } = req.params;
-        await Item.findByIdAndDelete(id);
+        const deletedItem = await Item.findByIdAndDelete(id);
+        if (!deletedItem) return res.status(404).json({ message: "Item no encontrado" });
+
         res.json({ message: "Item eliminado correctamente" });
     } catch (error) {
-        res.status(500).json({ message: "Error al eliminar el item", error });
+        res.status(500).json({ message: "Error al eliminar el item", error: error.message });
     }
 };
 
 // 📌 **Exportar todas las funciones**
-module.exports = { registerUser, loginUser, getUsers, updateUser, deleteUser, getItems, createItem, updateItem, deleteItem };
-
+module.exports = { 
+    registerUser, 
+    loginUser, 
+    getUsers, 
+    updateUser, 
+    deleteUser, 
+    getItems, 
+    getItemById,  // ✅ Nuevo método agregado
+    createItem, 
+    updateItem, 
+    deleteItem 
+};
